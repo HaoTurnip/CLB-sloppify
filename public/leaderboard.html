@@ -1,0 +1,274 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Commit Leaderboard</title>
+    <style>
+        :root {
+            --bg-primary: #1a1a1a;
+            --bg-secondary: #2d2d2d;
+            --text-primary: #ffffff;
+            --text-secondary: #b3b3b3;
+            --accent: #58a6ff;
+            --border: #404040;
+        }
+
+        body {
+            margin: 0;
+            padding: 0;
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+            background: var(--bg-primary);
+            color: var(--text-primary);
+        }
+
+        .container {
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+
+        .header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 30px;
+        }
+
+        .search-box {
+            width: 100%;
+            padding: 12px;
+            margin-bottom: 20px;
+            background: var(--bg-secondary);
+            border: 1px solid var(--border);
+            border-radius: 6px;
+            color: var(--text-primary);
+        }
+
+        .search-box:focus {
+            outline: none;
+            border-color: var(--accent);
+        }
+
+        .commit-card {
+            background: var(--bg-secondary);
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            padding: 16px;
+            margin-bottom: 16px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            transition: transform 0.2s;
+        }
+
+        .commit-card:hover {
+            transform: translateY(-2px);
+        }
+
+        .commit-info h3 {
+            margin: 0 0 8px 0;
+            color: var(--text-primary);
+        }
+
+        .commit-info p {
+            margin: 0;
+            color: var(--text-secondary);
+            font-size: 14px;
+        }
+
+        .upvote-btn {
+            background: transparent;
+            border: 1px solid var(--accent);
+            color: var(--accent);
+            padding: 8px 16px;
+            border-radius: 20px;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .upvote-btn:hover {
+            background: var(--accent);
+            color: var(--bg-primary);
+        }
+
+        .upvote-btn.voted {
+            background: var(--accent);
+            color: var(--bg-primary);
+        }
+
+        .auth-button {
+            background: var(--accent);
+            color: var(--bg-primary);
+            border: none;
+            padding: 10px 20px;
+            border-radius: 6px;
+            cursor: pointer;
+            font-weight: 600;
+        }
+
+        .user-info {
+            color: var(--text-secondary);
+        }
+
+        #error-message {
+            background: #ff5555;
+            color: white;
+            padding: 10px;
+            border-radius: 6px;
+            margin-bottom: 20px;
+            display: none;
+        }
+    </style>
+</head>
+<body>
+<div class="container">
+    <div class="header">
+        <h1>Commit Leaderboard</h1>
+        <div id="auth-section">
+            <button id="login-button" class="auth-button">Login with GitHub</button>
+            <span id="user-info" class="user-info" style="display: none"></span>
+        </div>
+    </div>
+
+    <div id="error-message"></div>
+    <input type="text" id="search-input" class="search-box" placeholder="Search commits...">
+    <div id="leaderboard"></div>
+</div>
+
+<script src="leader_board_tunnel.js"></script>
+<script>
+        const CLIENT_ID = 'Ov23ligs3nFJsyC12uPP';
+        const TUNNEL_URL = 'https://5c2a-2a09-bac5-30c8-1eb-00-31-116.ngrok-free.app';
+
+        let accessToken = localStorage.getItem('github_token');
+        let votedCommits = new Set(JSON.parse(localStorage.getItem('voted_commits') || '[]'));
+
+        // Configure tunnel
+        tunnel.setBaseUrl(TUNNEL_URL);
+
+        // GitHub OAuth login
+        document.getElementById('login-button').addEventListener('click', () => {
+        const redirectUri = `${window.location.origin}/leaderboard.html`;
+        window.location.href = `https://github.com/login/oauth/authorize?client_id=${CLIENT_ID}&redirect_uri=${redirectUri}&scope=repo`;
+    });
+
+        // Handle OAuth callback
+        const code = new URLSearchParams(window.location.search).get('code');
+        if (code) {
+        tunnel.get(`/auth/github?code=${code}`)
+            .then(response => {
+                accessToken = response.access_token;
+                localStorage.setItem('github_token', accessToken);
+                // Remove code from URL
+                window.history.replaceState({}, document.title, '/leaderboard.html');
+                updateAuthUI();
+                syncCommits();
+            })
+            .catch(error => {
+                showError(error.message);
+                console.log(error);
+            });
+    }
+
+        function updateAuthUI() {
+        if (accessToken) {
+        document.getElementById('login-button').style.display = 'none';
+        document.getElementById('user-info').style.display = 'inline';
+        // Get user info from GitHub
+        fetch('https://api.github.com/user', {
+        headers: { 'Authorization': `token ${accessToken}` }
+    })
+        .then(res => res.json())
+        .then(user => {
+        document.getElementById('user-info').textContent = `Logged in as ${user.login}`;
+    });
+    }
+    }
+
+        function syncCommits() {
+        tunnel.post('/api/sync', { token: accessToken })
+            .then(() => loadCommits())
+            .catch(error => showError('Failed to sync commits'));
+    }
+
+        function showError(message) {
+        const errorDiv = document.getElementById('error-message');
+        errorDiv.textContent = message;
+        errorDiv.style.display = 'block';
+        setTimeout(() => {
+        errorDiv.style.display = 'none';
+    }, 5000);
+    }
+
+        function createCommitCard(commit) {
+        const card = document.createElement('div');
+        card.className = 'commit-card';
+        card.innerHTML = `
+                <div class="commit-info">
+                    <h3>${commit.message}</h3>
+                    <p>by ${commit.author} • ${new Date(commit.date).toLocaleDateString()}</p>
+                </div>
+                <button class="upvote-btn ${votedCommits.has(commit.id) ? 'voted' : ''}"
+                        data-commit-id="${commit.id}">
+                    ▲ ${commit.upvotes || 0}
+                </button>
+            `;
+        return card;
+    }
+
+        async function loadCommits(searchTerm = '') {
+        try {
+        const commits = await tunnel.get('/api/commits', { search: searchTerm });
+        const leaderboard = document.getElementById('leaderboard');
+        leaderboard.innerHTML = '';
+        commits.forEach(commit => {
+        leaderboard.appendChild(createCommitCard(commit));
+    });
+    } catch (error) {
+        showError('Failed to load commits');
+    }
+    }
+
+        // Handle voting
+        document.getElementById('leaderboard').addEventListener('click', async (e) => {
+        if (!e.target.classList.contains('upvote-btn')) return;
+        if (!accessToken) {
+        showError('Please login to vote');
+        return;
+    }
+
+        const commitId = e.target.dataset.commitId;
+        if (votedCommits.has(commitId)) return;
+
+        try {
+        await tunnel.post('/api/votes', {
+        commitId,
+        userId: accessToken // Using token as userId
+    });
+        votedCommits.add(commitId);
+        localStorage.setItem('voted_commits', JSON.stringify([...votedCommits]));
+        e.target.classList.add('voted');
+        const currentVotes = parseInt(e.target.innerText.split('▲')[1]);
+        e.target.innerText = `▲ ${currentVotes + 1}`;
+    } catch (error) {
+        showError('Failed to vote');
+    }
+    });
+
+        // Handle search
+        let searchTimeout;
+        document.getElementById('search-input').addEventListener('input', (e) => {
+        clearTimeout(searchTimeout);
+        searchTimeout = setTimeout(() => {
+        loadCommits(e.target.value.trim());
+    }, 300);
+    });
+
+        // Initial load
+        updateAuthUI();
+        loadCommits();
+</script>
+
+</body>
+</html>

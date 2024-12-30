@@ -1,0 +1,20 @@
+# Logs
+logs/
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# ngrok
+ngrok/
+
+# IDEs
+.idea/
+.vscode/
+*.iml
+
+# Node modules
+node_modules/
+
+# Environment variables
+.env

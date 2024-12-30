@@ -1,0 +1,182 @@
+[
+  {
+    "id": "1f5cc9830e92ac08df737e964924e0a1881c9974",
+    "message": "begone, thot",
+    "author": "Zebulun McNeill",
+    "date": "2024-12-30T23:32:55Z"
+  },
+  {
+    "id": "6241f46a2d661140b99a444acf517f72f399e24d",
+    "message": "Merge pull request #194 from NeligFernando/main\n\nAdded touhouproject.html",
+    "author": "Dishpit",
+    "date": "2024-12-30T19:09:04Z"
+  },
+  {
+    "id": "35a7901df8c527497b6b857ea410e867eb421208",
+    "message": "Merge pull request #198 from WOJelly/patch-1\n\nfix",
+    "author": "Dishpit",
+    "date": "2024-12-30T19:08:37Z"
+  },
+  {
+    "id": "66327a96d300efb84e2d9b49d8788756db85b025",
+    "message": "Merge pull request #197 from Nasko-5/slopchatbuttonnnn\n\nadd more clear slopchat button",
+    "author": "Dishpit",
+    "date": "2024-12-30T19:06:45Z"
+  },
+  {
+    "id": "f0150c969f29c70ceb948214b03fe74384739445",
+    "message": "Merge pull request #196 from david-almagro/main\n\nadd playable doom wadcmd",
+    "author": "Dishpit",
+    "date": "2024-12-30T19:06:02Z"
+  },
+  {
+    "id": "82d6b4ea51ac19f1a5dd969aeecc62b24120107a",
+    "message": "Merge branch 'main' into main",
+    "author": "EnderChurro",
+    "date": "2024-12-30T19:05:55Z"
+  },
+  {
+    "id": "0e5297c341058c37c565ae36ced13f7301b80103",
+    "message": "Merge pull request #193 from infernostars/patch-9\n\nbug(chat): remove the stretch",
+    "author": "Dishpit",
+    "date": "2024-12-30T19:03:31Z"
+  },
+  {
+    "id": "580fb8e75fa5de5ebdb03b207bd473263488f40a",
+    "message": "Merge pull request #192 from theoneorlox/add-shake\n\nadded the shake effect to all mouseovers",
+    "author": "Dishpit",
+    "date": "2024-12-30T19:03:03Z"
+  },
+  {
+    "id": "7e41927bdc3e542122e22fe1a530b301c64a66a6",
+    "message": "Merge pull request #191 from KorryKatti/main\n\nPlays bad apple in console",
+    "author": "Dishpit",
+    "date": "2024-12-30T19:01:51Z"
+  },
+  {
+    "id": "589f5ee702c043c2d5a6e112697d61d5bfe36c7b",
+    "message": "Merge pull request #190 from lofimichael/docker-support\n\nDocker support",
+    "author": "Dishpit",
+    "date": "2024-12-30T19:00:29Z"
+  },
+  {
+    "id": "e84ec203d53f236594cba831989e68191ea8a085",
+    "message": "Merge pull request #187 from lofimichael/pre-commit-hooks\n\n✨emojis now mandatory in commit messages ✨",
+    "author": "Dishpit",
+    "date": "2024-12-30T18:59:15Z"
+  },
+  {
+    "id": "1ecc8836137ff60a7c7a18a012cfb14fb962f767",
+    "message": "Merge pull request #189 from mizisacodernow/main\n\nmy diary!!",
+    "author": "Dishpit",
+    "date": "2024-12-30T18:58:40Z"
+  },
+  {
+    "id": "8e855824298f33c9d3c6ef0f0c036ce603fba2cb",
+    "message": "Merge branch 'main' into pre-commit-hooks",
+    "author": "@lofimichael",
+    "date": "2024-12-30T18:58:31Z"
+  },
+  {
+    "id": "50365e81421d1e28165a14e4757fd8366fa77484",
+    "message": "Merge pull request #188 from stplva/main\n\nfeat: brainrot playlist",
+    "author": "Dishpit",
+    "date": "2024-12-30T18:57:50Z"
+  },
+  {
+    "id": "48e9f45b38c61af7ad1ef8b41b4d17a3d50605ce",
+    "message": "Merge pull request #186 from DeepSeaDiver007/patch-1\n\nUpdate quotes.json",
+    "author": "Dishpit",
+    "date": "2024-12-30T18:53:43Z"
+  },
+  {
+    "id": "be508de0274c62ff699035cdecb1dbe5487d9b4c",
+    "message": "Merge pull request #184 from arthurdeka/main\n\nAdd LIVE-SERVER and update README.md and CONTRIBUTING.md",
+    "author": "Dishpit",
+    "date": "2024-12-30T18:52:43Z"
+  },
+  {
+    "id": "889ac375aa119d21867b19937410d4ffa5863f0a",
+    "message": "Merge pull request #175 from eigenlenk/feature/gain-perspective\n\nGain perspective",
+    "author": "Dishpit",
+    "date": "2024-12-30T18:48:41Z"
+  },
+  {
+    "id": "de6b222e67b8ad73457e85dffb5c346f049b57b3",
+    "message": "Merge pull request #172 from Nasko-5/chatfixes\n\nAdd message highlights when mentioned / bugfix",
+    "author": "Dishpit",
+    "date": "2024-12-30T18:47:00Z"
+  },
+  {
+    "id": "220d698132383a8422a468527ff36f5ef2b09061",
+    "message": "fix",
+    "author": "WarriorOfJelly",
+    "date": "2024-12-30T18:46:31Z"
+  },
+  {
+    "id": "6e2754f4e7754542b18ed9e0e4e04bf8d084a739",
+    "message": "Merge pull request #170 from sanstzu/main\n\nfix oppenheimer index",
+    "author": "Dishpit",
+    "date": "2024-12-30T18:42:14Z"
+  },
+  {
+    "id": "a0abcadf9f0163d2760fbc2d0ca369b9bc2b2690",
+    "message": "Merge pull request #137 from WOJelly/patch-1\n\nUpdate index.html",
+    "author": "Dishpit",
+    "date": "2024-12-30T18:36:57Z"
+  },
+  {
+    "id": "5e5f7505dac98402a247857e92500d8610a9bf1e",
+    "message": "Merge pull request #166 from Ednaordinary/icey-oneko\n\nadd icey oneko",
+    "author": "Dishpit",
+    "date": "2024-12-30T18:29:03Z"
+  },
+  {
+    "id": "85de72a17d723bfaa5d72705477d0c69bcf156ff",
+    "message": "Merge pull request #165 from lofimichael/pretty-good\n\nBypassing security yields congratulations from Liquid Ocelot",
+    "author": "Dishpit",
+    "date": "2024-12-30T18:28:13Z"
+  },
+  {
+    "id": "d6f48364efda1c26c2cc61626717897000c89dea",
+    "message": "Merge pull request #164 from 10thjeh/main\n\nfeat: add healthcheck endpoint",
+    "author": "Dishpit",
+    "date": "2024-12-30T18:25:54Z"
+  },
+  {
+    "id": "a0d2eaa47a367580c1579fe514af3cd9829adc68",
+    "message": "Merge branch 'DishpitDev:main' into patch-1",
+    "author": "wojelly",
+    "date": "2024-12-30T18:23:48Z"
+  },
+  {
+    "id": "4502d8435c2f488f74455b267522ea7161fdc4aa",
+    "message": "add more clear slopchat button",
+    "author": "Nasko-5",
+    "date": "2024-12-30T18:23:12Z"
+  },
+  {
+    "id": "145d503c1819fdbf2142779341d9118d9ff7c936",
+    "message": "Merge pull request #163 from kengcc/patch-1\n\nUpdate chat.html",
+    "author": "Dishpit",
+    "date": "2024-12-30T18:22:11Z"
+  },
+  {
+    "id": "f69555db8fea9810fc4a0c7166ecc56d565ab68d",
+    "message": "Merge pull request #161 from Merlin04/wahoo\n\nfeat(ci): Add automated build and test workflow",
+    "author": "Dishpit",
+    "date": "2024-12-30T18:21:03Z"
+  },
+  {
+    "id": "c87fb1c5dc9996a26f1a45d4fc64dae8e71c0f54",
+    "message": "Merge branch 'main' into pretty-good",
+    "author": "@lofimichael",
+    "date": "2024-12-30T18:20:56Z"
+  },
+  {
+    "id": "f59e1983980e236359b1835e28f5ad03b1c805b6",
+    "message": "Merge pull request #160 from lofimichael/feature/dvd-bounce\n\ndvd bounce",
+    "author": "Dishpit",
+    "date": "2024-12-30T18:18:52Z"
+  }
+]
