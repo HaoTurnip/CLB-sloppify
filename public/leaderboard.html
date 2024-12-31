@@ -417,13 +417,20 @@
             },
             commitinfo: {
                 color: '#ff00ff'
+            },
+            userinfo: {
+                color: '#00ff00'
             }
         },
         retroblog: {
             body: {
                 background: '#ffffe0',
                 color: '#000000',
-                backgroundImage: 'none',
+                backgroundImage: `linear-gradient(#ffffe0 2px, transparent 2px),
+                    linear-gradient(90deg, #ffffe0 2px, transparent 2px),
+                    linear-gradient(#d4d4c7 1px, transparent 1px),
+                    linear-gradient(90deg, #d4d4c7 1px, transparent 1px)`,
+                backgroundSize: '100px 100px, 100px 100px, 20px 20px, 20px 20px',
                 textShadow: 'none'
             },
             headerBorder: '#8b4513',
@@ -456,13 +463,21 @@
             },
             commitinfo: {
                 color: '#000000'
+            },
+            userinfo: {
+                color: '#8b4513'
             }
         },
         cyberpunk: {
             body: {
                 background: '#000000',
                 color: '#33ff33',
-                backgroundImage: 'none',
+                backgroundImage: `linear-gradient(
+                    0deg,
+                    rgba(51, 255, 51, 0.03) 50%,
+                    transparent 50%
+                )`,
+                backgroundSize: '4px 4px',
                 textShadow: 'none'
             },
             headerBorder: '#33ff33',
@@ -497,6 +512,9 @@
             },
             commitinfo: {
                 color: '#ffffff'
+            },
+            userinfo: {
+                color: '#33ff33'
             }
         }
     };
@@ -545,6 +563,8 @@
             Object.assign(info.style, style.commitinfo);
         });
         
+        const userinfo = document.querySelector('.user-info');
+        Object.assign(userinfo.style, style.userinfo);
         // Update createCommitCard function to use current theme
         window.currentTheme = theme;
     }
