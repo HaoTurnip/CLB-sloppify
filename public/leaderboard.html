@@ -218,10 +218,10 @@
     
         <!-- Add the style switcher buttons here, right after the header -->
         <div style="margin-bottom: 20px; text-align: center; padding: 10px; border: 2px solid #00ffff; background: #220033;">
-            <p style="color: #00ffff; margin-bottom: 10px; font-size: 12px;">SELECT YOUR STYLE</p>
-            <button onclick="setStyle('synthwave')" style="margin: 0 10px; background: #000000; color: #00ffff; border: 2px solid #00ffff; padding: 8px 16px; cursor: pointer; font-family: 'Press Start 2P', cursive; font-size: 10px;">SYNTHWAVE</button>
-            <button onclick="setStyle('retroblog')" style="margin: 0 10px; background: #000000; color: #00ffff; border: 2px solid #00ffff; padding: 8px 16px; cursor: pointer; font-family: 'Press Start 2P', cursive; font-size: 10px;">RETRO BLOG</button>
-            <button onclick="setStyle('cyberpunk')" style="margin: 0 10px; background: #000000; color: #00ffff; border: 2px solid #00ffff; padding: 8px 16px; cursor: pointer; font-family: 'Press Start 2P', cursive; font-size: 10px;">CYBERPUNK</button>
+            <p class="style_text" style="color: #00ffff; margin-bottom: 10px; font-size: 12px;">SELECT YOUR STYLE</p>
+            <button onclick="setStyle('synthwave')" style="margin: 0 10px; background: #000000; color: #00ffff; border: 2px solid #00ffff; padding: 8px 16px; cursor: pointer; font-family: 'Press Start 2P', cursive; font-size: 10px; box-shadow:3px 3px 0 #ff00ff;">SYNTHWAVE</button>
+            <button onclick="setStyle('retroblog')" style="margin: 0 10px; background: #000000; color: #00ffff; border: 2px solid #00ffff; padding: 8px 16px; cursor: pointer; font-family: 'Press Start 2P', cursive; font-size: 10px; box-shadow:3px 3px 0 #ff00ff">RETRO BLOG</button>
+            <button onclick="setStyle('cyberpunk')" style="margin: 0 10px; background: #000000; color: #00ffff; border: 2px solid #00ffff; padding: 8px 16px; cursor: pointer; font-family: 'Press Start 2P', cursive; font-size: 10px; box-shadow:3px 3px 0 #ff00ff">BASIC</button>
         </div>
     
         <div id="error-message" style="background: #ff0000; color: white; padding: 10px; margin-bottom: 20px; display: none; border: 2px solid white; text-align: center; font-size: 12px;"></div>
@@ -387,6 +387,7 @@
                 backgroundSize: '50px 50px',
                 textShadow: '2px 2px #ff00ff'
             },
+            headerBorder: '#00ffff', 
             container: {
                 border: '2px solid #00ffff',
                 boxShadow: '0 0 20px #00ffff'
@@ -413,6 +414,9 @@
             styleSwitch: {
                 background: '#220033',
                 border: '2px solid #00ffff'
+            },
+            commitinfo: {
+                color: '#ff00ff'
             }
         },
         retroblog: {
@@ -422,6 +426,7 @@
                 backgroundImage: 'none',
                 textShadow: 'none'
             },
+            headerBorder: '#8b4513',
             container: {
                 border: '2px solid #8b4513',
                 boxShadow: '5px 5px 0 #d2691e'
@@ -448,50 +453,50 @@
             styleSwitch: {
                 background: '#f4a460',
                 border: '2px solid #8b4513'
+            },
+            commitinfo: {
+                color: '#000000'
             }
         },
         cyberpunk: {
             body: {
-                background: '#0a0a2a',
-                color: '#00ff00',
-                backgroundImage: `repeating-linear-gradient(
-                    90deg,
-                    rgba(255,0,0,0.1) 0px,
-                    rgba(255,0,0,0.1) 1px,
-                    transparent 1px,
-                    transparent 20px
-                )`,
-                backgroundSize: '100% 100%',
-                textShadow: '0 0 5px #00ff00'
+                background: '#000000',
+                color: '#33ff33',
+                backgroundImage: 'none',
+                textShadow: 'none'
             },
+            headerBorder: '#33ff33',
             container: {
-                border: '2px solid #ff0000',
-                boxShadow: '0 0 20px rgba(255,0,0,0.5), inset 0 0 20px rgba(255,0,0,0.5)'
+                border: '1px solid #33ff33',
+                boxShadow: 'none'
             },
             card: {
-                background: 'rgba(0,0,0,0.8)',
-                border: '1px solid #ff0000',
-                boxShadow: '0 0 10px rgba(255,0,0,0.5)'
+                background: '#000000',
+                border: '1px solid #33ff33',
+                boxShadow: 'none'
             },
             button: {
                 background: '#000000',
-                color: '#ff0000',
-                border: '1px solid #ff0000',
-                boxShadow: '0 0 10px rgba(255,0,0,0.5)'
+                color: '#33ff33',
+                border: '1px solid #33ff33',
+                boxShadow: 'none'
             },
             heading: {
-                color: '#ff0000'
+                color: '#33ff33'
             },
             searchBox: {
-                background: 'rgba(0,0,0,0.8)',
-                border: '1px solid #ff0000',
-                color: '#ff0000',
-                boxShadow: '0 0 10px rgba(255,0,0,0.5)'
+                background: '#000000',
+                border: '1px solid #33ff33',
+                color: '#33ff33',
+                boxShadow: 'none'
             },
             styleSwitch: {
-                background: 'rgba(0,0,0,0.8)',
-                border: '1px solid #ff0000',
-                boxShadow: '0 0 10px rgba(255,0,0,0.5)'
+                background: '#000000',
+                border: '1px solid #33ff33',
+                boxShadow: 'none'
+            },
+            commitinfo: {
+                color: '#ffffff'
             }
         }
     };
@@ -505,6 +510,9 @@
         // Apply container styles
         const container = document.querySelector('.container');
         Object.assign(container.style, style.container);
+
+        const header = document.querySelector('.header');
+        header.style.borderBottom = `2px solid ${style.headerBorder}`
         
         // Apply styles to all cards
         document.querySelectorAll('.commit-card').forEach(card => {
@@ -528,6 +536,14 @@
         // Apply styles to style switcher container
         const styleSwitch = document.querySelector('[style*="text-align: center"]');
         Object.assign(styleSwitch.style, style.styleSwitch);
+
+        const styletext = document.querySelector('.style_text');
+        Object.assign(styletext.style, style.heading);
+
+        const commitinfo = document.querySelectorAll('.commit-info p');
+        commitinfo.forEach(info => {
+            Object.assign(info.style, style.commitinfo);
+        });
         
         // Update createCommitCard function to use current theme
         window.currentTheme = theme;
