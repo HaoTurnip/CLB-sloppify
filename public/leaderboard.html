@@ -243,7 +243,7 @@
         // GitHub OAuth login
         document.getElementById('login-button').addEventListener('click', () => {
         const redirectUri = `${window.location.origin}/leaderboard.html`;
-        window.location.href = `https://github.com/login/oauth/authorize?client_id=${CLIENT_ID}&redirect_uri=${redirectUri}&scope=repo`;
+        window.location.href = `https://github.com/login/oauth/authorize?client_id=${CLIENT_ID}&redirect_uri=${redirectUri}&scope=read:user`;
     });
 
         // Handle OAuth callback
