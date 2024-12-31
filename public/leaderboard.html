@@ -273,16 +273,23 @@
         function syncCommits() {
         tunnel.post('/api/sync', { token: accessToken })
             .then(() => loadCommits())
-            .catch(error => showError('Failed to sync commits'));
+            .catch(() => showError('WELCOME TO THE LEADERBOARD'));
     }
 
         function showError(message) {
-        const errorDiv = document.getElementById('error-message');
-        errorDiv.textContent = message;
-        errorDiv.style.display = 'block';
-        setTimeout(() => {
-        errorDiv.style.display = 'none';
-    }, 5000);
+            const errorDiv = document.getElementById('error-message');
+            errorDiv.textContent = message;
+            if (message === 'WELCOME TO THE LEADERBOARD') {
+                errorDiv.style.backgroundColor = 'green';
+            } else {
+                errorDiv.style.backgroundColor = 'red';
+            }
+            errorDiv.style.display = 'block';
+            setTimeout(() => {
+                errorDiv.style.display = 'none';
+            }, 5000);
+        }
+
         function createCommitCard(commit) {
             const card = document.createElement('div');
             card.className = 'commit-card';
@@ -350,7 +357,7 @@
 
         // Initial load
         updateAuthUI();
-        loadCommits();}
+        loadCommits();
 </script>
 
 </body>
