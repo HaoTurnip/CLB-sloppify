@@ -6,6 +6,46 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Commit Leaderboard</title>
     <style>
+
+
+
+
+
+
+
+
+
+        .badge {
+            padding: 4px 8px;
+            border-radius: 12px;
+            font-size: 12px;
+            font-weight: bold;
+        }
+
+        .badge.merged {
+            background-color: #6f42c1;
+            color: white;
+        }
+
+        .badge.closed {
+            background-color: #cb2431;
+            color: white;
+        }
+
+        .badge.open {
+            background-color: #2cbe4e;
+            color: white;
+        }
+
+        .pr-description {
+            font-size: 14px;
+            color: var(--text-secondary);
+            margin-top: 8px;
+            white-space: pre-wrap;
+        }
+
+
+
         body::after {
             content: "";
             position: fixed;
@@ -231,11 +271,12 @@
 
 <script src="leader_board_tunnel.js"></script>
 <script>
+
         const CLIENT_ID = 'Ov23ligs3nFJsyC12uPP';
         const TUNNEL_URL = 'https://5c2a-2a09-bac5-30c8-1eb-00-31-116.ngrok-free.app';
 
         let accessToken = localStorage.getItem('github_token');
-        let votedCommits = new Set(JSON.parse(localStorage.getItem('voted_commits') || '[]'));
+        let votedPulls = new Set(JSON.parse(localStorage.getItem('voted_pulls') || '[]'));
 
         // Configure tunnel
         tunnel.setBaseUrl(TUNNEL_URL);
@@ -256,7 +297,7 @@
                 // Remove code from URL
                 window.history.replaceState({}, document.title, '/leaderboard.html');
                 updateAuthUI();
-                syncCommits();
+                syncPulls();
             })
             .catch(error => {
                 showError(error.message);
@@ -279,53 +320,66 @@
     }
     }
 
-        function syncCommits() {
+        function syncPulls() {
         tunnel.post('/api/sync', { token: accessToken })
-            .then(() => loadCommits())
+            .then(() => loadPulls())
             .catch(() => showError('WELCOME TO THE LEADERBOARD'));
     }
 
         function showError(message) {
-            const errorDiv = document.getElementById('error-message');
-            errorDiv.textContent = message;
-            if (message === 'WELCOME TO THE LEADERBOARD') {
-                errorDiv.style.backgroundColor = 'green';
-            } else {
-                errorDiv.style.backgroundColor = 'red';
-            }
-            errorDiv.style.display = 'block';
-            setTimeout(() => {
-                errorDiv.style.display = 'none';
-            }, 5000);
-        }
+        const errorDiv = document.getElementById('error-message');
+        errorDiv.textContent = message;
+        if (message === 'WELCOME TO THE LEADERBOARD') {
+        errorDiv.style.backgroundColor = 'green';
+    } else {
+        errorDiv.style.backgroundColor = 'red';
+    }
+        errorDiv.style.display = 'block';
+        setTimeout(() => {
+        errorDiv.style.display = 'none';
+    }, 5000);
+    }
 
-        function createCommitCard(commit) {
-            const card = document.createElement('div');
-            card.className = 'commit-card';
-            card.innerHTML = `
-                <a href="${commit.link}" target="_blank" class="commit-link">
-                    <div class="commit-info">
-                        <h3>${commit.message}</h3>
-                        <p>by ${commit.author} • ${new Date(commit.date).toLocaleDateString()}</p>
+        function getStatusBadge(pr) {
+        if (pr.merged) {
+        return '<span class="badge merged">Merged</span>';
+    } else if (pr.state === 'closed') {
+        return '<span class="badge closed">Closed</span>';
+    }
+        return '<span class="badge open">Open</span>';
+    }
+
+        function createPullRequestCard(pr) {
+        const card = document.createElement('div');
+        card.className = 'commit-card';
+        card.innerHTML = `
+            <a href="${pr.link}" target="_blank" class="commit-link">
+                <div class="commit-info">
+                    <div style="display: flex; justify-content: space-between; align-items: start;">
+                        <h3>${pr.message}</h3>
+                        ${getStatusBadge(pr)}
                     </div>
-                </a>
-                <button class="upvote-btn ${votedCommits.has(commit.id) ? 'voted' : ''}"
-                        data-commit-id="${commit.id}">
-                    ▲ ${commit.upvotes || 0}
-                </button>`;
-            return card;
-            }
+                    <p>by ${pr.author} • ${new Date(pr.date).toLocaleDateString()}</p>
+                    ${pr.description ? `<p class="pr-description">${pr.description}</p>` : ''}
+                </div>
+            </a>
+            <button class="upvote-btn ${votedPulls.has(pr.id) ? 'voted' : ''}"
+                    data-pull-id="${pr.id}">
+                ▲ ${pr.upvotes || 0}
+            </button>`;
+        return card;
+    }
 
-            async function loadCommits(searchTerm = '') {
+        async function loadPulls(searchTerm = '') {
         try {
-        const commits = await tunnel.get('/api/commits', { search: searchTerm });
+        const pulls = await tunnel.get('/api/pulls', { search: searchTerm });
         const leaderboard = document.getElementById('leaderboard');
         leaderboard.innerHTML = '';
-        commits.forEach(commit => {
-        leaderboard.appendChild(createCommitCard(commit));
+        pulls.forEach(pull => {
+        leaderboard.appendChild(createPullRequestCard(pull));
     });
     } catch (error) {
-        showError('Failed to load commits');
+        showError('Failed to load pull requests');
     }
     }
 
@@ -337,16 +391,16 @@
         return;
     }
 
-        const commitId = e.target.dataset.commitId;
-        if (votedCommits.has(commitId)) return;
+        const pullId = e.target.dataset.pullId;
+        if (votedPulls.has(pullId)) return;
 
         try {
         await tunnel.post('/api/votes', {
-        commitId,
+        pullId,
         userId: accessToken // Using token as userId
     });
-        votedCommits.add(commitId);
-        localStorage.setItem('voted_commits', JSON.stringify([...votedCommits]));
+        votedPulls.add(pullId);
+        localStorage.setItem('voted_pulls', JSON.stringify([...votedPulls]));
         e.target.classList.add('voted');
         const currentVotes = parseInt(e.target.innerText.split('▲')[1]);
         e.target.innerText = `▲ ${currentVotes + 1}`;
@@ -360,13 +414,13 @@
         document.getElementById('search-input').addEventListener('input', (e) => {
         clearTimeout(searchTimeout);
         searchTimeout = setTimeout(() => {
-        loadCommits(e.target.value.trim());
+        loadPulls(e.target.value.trim());
     }, 300);
     });
 
         // Initial load
         updateAuthUI();
-        loadCommits();
+        loadPulls();
 </script>
 <script>
     const styles = {
