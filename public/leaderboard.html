@@ -398,10 +398,14 @@
                 boxShadow: '4px 4px 0 #ff00ff'
             },
             button: {
-                background: '#000000',
+                background: 'linear-gradient(45deg, #000000 0%, #330066 50%, #000000 100%)',
                 color: '#00ffff',
                 border: '2px solid #00ffff',
                 boxShadow: '3px 3px 0 #ff00ff'
+            },
+            buttonHover: {
+                background: 'linear-gradient(45deg, #00ffff 0%, #0099ff 50%, #00ffff 100%)',
+                color: '#000000'
             },
             heading: {
                 color: '#00ffff'
@@ -419,7 +423,11 @@
                 color: '#ff00ff'
             },
             userinfo: {
-                color: '#00ff00'
+                color: '#ff00ff'
+            },
+            votedButton: {
+                background: 'linear-gradient(45deg, #00ffff 0%, #00ccff 50%, #00ffff 100%)',
+                color: '#000000'
             }
         },
         retroblog: {
@@ -444,10 +452,18 @@
                 boxShadow: '3px 3px 0 #d2691e'
             },
             button: {
-                background: '#f4a460',
+                background: 'linear-gradient(45deg, #f4a460 0%, #d2691e 50%, #f4a460 100%)',
                 color: '#000000',
                 border: '2px solid #8b4513',
                 boxShadow: '2px 2px 0 #8b4513'
+            },
+            buttonHover: {
+                background: 'linear-gradient(45deg, #d2691e 0%, #8b4513 50%, #d2691e 100%)',
+                color: '#ffffff'
+            },
+            votedButton: {
+                background: 'linear-gradient(45deg, #8b4513 0%, #654321 50%, #8b4513 100%)',
+                color: '#ffffff'
             },
             heading: {
                 color: '#8b4513'
@@ -466,7 +482,7 @@
             },
             userinfo: {
                 color: '#8b4513'
-            }
+            },
         },
         cyberpunk: {
             body: {
@@ -491,10 +507,18 @@
                 boxShadow: 'none'
             },
             button: {
-                background: '#000000',
+                background: 'linear-gradient(45deg, #000000 0%, #001100 50%, #000000 100%)',
                 color: '#33ff33',
                 border: '1px solid #33ff33',
                 boxShadow: 'none'
+            },
+            buttonHover: {
+                background: 'linear-gradient(45deg, #33ff33 0%, #00ff00 50%, #33ff33 100%)',
+                color: '#000000'
+            },
+            votedButton: {
+                background: 'linear-gradient(45deg, #33ff33 0%, #00cc00 50%, #33ff33 100%)',
+                color: '#000000'
             },
             heading: {
                 color: '#33ff33'
@@ -515,13 +539,20 @@
             },
             userinfo: {
                 color: '#33ff33'
-            }
+            },
         }
     };
 
     function setStyle(theme) {
         const style = styles[theme];
-        
+
+
+        document.documentElement.style.setProperty('--button-gradient', style.button.background);
+        document.documentElement.style.setProperty('--button-hover-gradient', style.buttonHover.background);
+        document.documentElement.style.setProperty('--button-hover-color', style.buttonHover.color);
+        document.documentElement.style.setProperty('--voted-gradient', style.votedButton.background);
+        document.documentElement.style.setProperty('--voted-color', style.votedButton.color);
+        document.documentElement.style.setProperty('--border', style.button.boxShadow.split(' ')[3]);
         // Apply body styles
         Object.assign(document.body.style, style.body);
         
@@ -540,6 +571,19 @@
         // Apply styles to all buttons
         document.querySelectorAll('button').forEach(button => {
             Object.assign(button.style, style.button);
+        });
+
+        document.querySelectorAll('.upvote-btn.voted').forEach(button => {
+            Object.assign(button.style, style.votedButton);
+        });
+
+        document.querySelectorAll('.upvote-btn').forEach(button => {
+            button.addEventListener('mouseover', () => {
+                Object.assign(button.style, style.buttonHover);
+            });
+            button.addEventListener('mouseout', () => {
+                Object.assign(button.style, style.button);
+            });
         });
         
         // Apply styles to headings
@@ -563,6 +607,8 @@
             Object.assign(info.style, style.commitinfo);
         });
         
+        e.target.classList.add('voted');
+        Object.assign(e.target.style, styles[currentTheme].votedButton);
         const userinfo = document.querySelector('.user-info');
         Object.assign(userinfo.style, style.userinfo);
         // Update createCommitCard function to use current theme
