@@ -545,7 +545,8 @@
 
     function setStyle(theme) {
         const style = styles[theme];
-
+        const userinfo = document.querySelector('#user-info');
+        Object.assign(userinfo.style, style.userinfo);
 
         document.documentElement.style.setProperty('--button-gradient', style.button.background);
         document.documentElement.style.setProperty('--button-hover-gradient', style.buttonHover.background);
@@ -578,14 +579,19 @@
         });
 
         document.querySelectorAll('.upvote-btn').forEach(button => {
+            if (!button.classList.contains('voted')) {
             button.addEventListener('mouseover', () => {
                 Object.assign(button.style, style.buttonHover);
             });
             button.addEventListener('mouseout', () => {
-                Object.assign(button.style, style.button);
+
+                    Object.assign(button.style, style.button);
+
             });
+            }
         });
-        
+
+
         // Apply styles to headings
         document.querySelectorAll('h1, h3').forEach(heading => {
             Object.assign(heading.style, style.heading);
@@ -609,8 +615,7 @@
         
         e.target.classList.add('voted');
         Object.assign(e.target.style, styles[currentTheme].votedButton);
-        const userinfo = document.querySelector('.user-info');
-        Object.assign(userinfo.style, style.userinfo);
+
         // Update createCommitCard function to use current theme
         window.currentTheme = theme;
     }
