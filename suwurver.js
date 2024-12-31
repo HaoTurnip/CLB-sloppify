@@ -3,70 +3,175 @@ const cors = require('cors');
 const fs = require('fs').promises;
 const path = require('path');
 const fetch = require('node-fetch');
+const rateLimit = require('express-rate-limit');
+const helmet = require('helmet');
+const chalk = require('chalk');
 require('dotenv').config();
 
 const app = express();
-app.use(cors());
-app.use(express.json());
+// Enable trust proxy - add this BEFORE other middleware
+app.set('trust proxy', 1);  // Trust first proxy
+
+// Enhanced security middleware
+app.use(helmet()); // Adds various HTTP headers for security
+app.use(cors({
+    origin: process.env.ALLOWED_ORIGINS?.split(',') || '*',
+    methods: ['GET', 'POST'],
+    maxAge: 600
+}));
+app.use(express.json({ limit: '10kb' }));
+
+// Rate limiting configuration
+const rateLimiters = {
+    global: rateLimit({
+        windowMs: 15 * 60 * 1000,
+        max: 100,
+        standardHeaders: true,
+        legacyHeaders: false,
+        skipFailedRequests: true, // Don't count failed requests
+        handler: (req, res) => {
+            console.log(chalk.yellow(`Rate limit exceeded for IP: ${req.ip}`));
+            res.status(429).json({ error: 'Too many requests, please try again later.' });
+        }
+    }),
+    votes: rateLimit({
+        windowMs: 60 * 60 * 1000,
+        max: 100,
+        standardHeaders: true,
+        legacyHeaders: false,
+        handler: (req, res) => {
+            console.log(chalk.yellow(`Vote rate limit exceeded for IP: ${req.ip}`));
+            res.status(429).json({ error: 'Vote limit exceeded, please try again later.' });
+        }
+    }),
+    sync: rateLimit({
+        windowMs: 60 * 60 * 1000,
+        max: 100,
+        standardHeaders: true,
+        legacyHeaders: false,
+        handler: (req, res) => {
+            console.log(chalk.yellow(`Sync rate limit exceeded for IP: ${req.ip}`));
+            res.status(429).json({ error: 'Sync limit exceeded, please try again later.' });
+        }
+    })
+};
+
+// Apply global rate limiter
+app.use(rateLimiters.global);
 
 // GitHub OAuth settings
 const GITHUB_CLIENT_ID = process.env.GITHUB_CLIENT_ID;
 const GITHUB_CLIENT_SECRET = process.env.GITHUB_CLIENT_SECRET;
 
 if (!GITHUB_CLIENT_ID || !GITHUB_CLIENT_SECRET) {
-    console.error('GitHub OAuth credentials are not set.');
+    console.error(chalk.red.bold('GitHub OAuth credentials are not set.'));
     process.exit(1);
 }
+
+// Enhanced logging setup
+const LOG_LEVELS = {
+    INFO: 'INFO',
+    WARN: 'WARN',
+    ERROR: 'ERROR',
+    DEBUG: 'DEBUG'
+};
+
+class Logger {
+    constructor() {
+        this.logs = [];
+        this.LOGS_DIR = path.resolve('logs');
+        this.setupLogsDirectory();
+    }
+
+    async setupLogsDirectory() {
+        try {
+            await fs.mkdir(this.LOGS_DIR, { recursive: true });
+        } catch (error) {
+            console.error(chalk.red('Failed to create logs directory:', error));
+        }
+    }
+
+    formatLog(level, message, metadata = {}) {
+        const timestamp = new Date().toISOString();
+        const colorize = {
+            [LOG_LEVELS.INFO]: chalk.blue,
+            [LOG_LEVELS.WARN]: chalk.yellow,
+            [LOG_LEVELS.ERROR]: chalk.red,
+            [LOG_LEVELS.DEBUG]: chalk.gray
+        };
+
+        const logEntry = {
+            timestamp,
+            level,
+            message,
+            ...metadata
+        };
+
+        // Console output with colors
+        console.log(
+            `${chalk.green(timestamp)} [${colorize[level](level)}] ${message}`,
+            Object.keys(metadata).length ? metadata : ''
+        );
+
+        return logEntry;
+    }
+
+    log(level, message, metadata) {
+        const logEntry = this.formatLog(level, message, metadata);
+        this.logs.push(JSON.stringify(logEntry) + '\n');
+    }
+
+    async saveLogs() {
+        if (this.logs.length === 0) return;
+
+        const logFile = path.join(this.LOGS_DIR, `log_${Date.now()}.jsonl`);
+        try {
+            await fs.writeFile(logFile, this.logs.join(''));
+            this.logs = [];
+            this.log(LOG_LEVELS.INFO, `Logs saved to ${logFile}`);
+        } catch (error) {
+            console.error(chalk.red('Error saving logs:', error));
+        }
+    }
+}
+
+const logger = new Logger();
+
+// Save logs every 5 minutes
+setInterval(() => logger.saveLogs(), 15 * 60 * 1000);
+
+// Enhanced request logging middleware
+app.use((req, res, next) => {
+    const startTime = Date.now();
+
+    // Log request
+    logger.log(LOG_LEVELS.INFO, `Incoming ${req.method} request`, {
+        url: req.url,
+        ip: req.ip,
+        userAgent: req.headers['user-agent'],
+        body: req.method !== 'GET' ? req.body : undefined
+    });
+
+    // Log response
+    res.on('finish', () => {
+        const duration = Date.now() - startTime;
+        const level = res.statusCode >= 400 ? LOG_LEVELS.ERROR : LOG_LEVELS.INFO;
+
+        logger.log(level, `Request completed in ${duration}ms`, {
+            method: req.method,
+            url: req.url,
+            statusCode: res.statusCode,
+            duration
+        });
+    });
+
+    next();
+});
 
 // File paths
 const COMMITS_FILE = path.resolve('commits.json');
 const VOTES_FILE = path.resolve('votes.json');
-const LOGS_DIR = path.resolve('logs');
 
-// Ensure the /logs directory exists
-fs.mkdir(LOGS_DIR, { recursive: true }).catch(console.error);
-
-// Middleware for logging requests
-const logs = [];
-app.use((req, res, next) => {
-    const logEntry = `${new Date().toISOString()} - ${req.method} ${req.url} - Body: ${JSON.stringify(req.body)}\n`;
-    logs.push(logEntry);
-    console.log(logEntry);
-    next();
-});
-
-// Save logs to file every 10 minutes
-setInterval(async () => {
-    if (logs.length > 0) {
-        const logFile = path.join(LOGS_DIR, `log_${Date.now()}.txt`);
-        try {
-            await fs.writeFile(logFile, logs.join(''));
-            logs.length = 0; // Clear logs after saving
-            console.log(`Logs saved to ${logFile}`);
-        } catch (error) {
-            console.error('Error saving logs:', error);
-        }
-    }
-}, 10 * 60 * 1000);
-
-// Helper to read JSON files
-async function readJsonFile(filename, defaultValue = []) {
-    try {
-        const data = await fs.readFile(filename, 'utf8');
-        return JSON.parse(data);
-    } catch {
-        await fs.writeFile(filename, JSON.stringify(defaultValue));
-        return defaultValue;
-    }
-}
-
-// Helper to write JSON files
-async function writeJsonFile(filename, data) {
-    await fs.writeFile(filename, JSON.stringify(data, null, 2));
-}
-
-
-//helper function to fetch all commits from GitHub
 async function fetchAllCommits(token) {
     const commits = [];
     let page = 1;
@@ -109,22 +214,41 @@ async function fetchAllCommits(token) {
     }));
 }
 
+// Helper functions (same as before)
+async function readJsonFile(filename, defaultValue = []) {
+    try {
+        const data = await fs.readFile(filename, 'utf8');
+        return JSON.parse(data);
+    } catch (error) {
+        logger.log(LOG_LEVELS.WARN, `File not found, creating new: ${filename}`);
+        await fs.writeFile(filename, JSON.stringify(defaultValue));
+        return defaultValue;
+    }
+}
 
+async function writeJsonFile(filename, data) {
+    try {
+        await fs.writeFile(filename, JSON.stringify(data, null, 2));
+        logger.log(LOG_LEVELS.INFO, `Successfully wrote to ${filename}`);
+    } catch (error) {
+        logger.log(LOG_LEVELS.ERROR, `Failed to write to ${filename}`, { error: error.message });
+        throw error;
+    }
+}
 
-
-// GitHub OAuth endpoint
+// Enhanced GitHub OAuth endpoint
 app.get('/auth/github', async (req, res) => {
     const code = req.query.code;
     if (!code) {
+        logger.log(LOG_LEVELS.WARN, 'GitHub auth attempted without code');
         return res.status(400).json({ error: 'No code provided' });
     }
 
     try {
+        logger.log(LOG_LEVELS.INFO, 'Exchanging GitHub code for token');
         const tokenResponse = await fetch('https://github.com/login/oauth/access_token', {
             method: 'POST',
-            headers: {
-                Accept: 'application/json',  // We're expecting a JSON response
-            },
+            headers: { Accept: 'application/json' },
             body: new URLSearchParams({
                 client_id: GITHUB_CLIENT_ID,
                 client_secret: GITHUB_CLIENT_SECRET,
@@ -132,20 +256,20 @@ app.get('/auth/github', async (req, res) => {
             }),
         });
 
-
         const tokenData = await tokenResponse.json();
         if (!tokenResponse.ok) {
             throw new Error(tokenData.error || 'Failed to get access token');
         }
 
+        logger.log(LOG_LEVELS.INFO, 'GitHub authentication successful');
         res.json(tokenData);
     } catch (error) {
-        console.error('Auth error:', error);
+        logger.log(LOG_LEVELS.ERROR, 'GitHub authentication failed', { error: error.message });
         res.status(500).json({ error: 'Authentication failed' });
     }
 });
 
-// Get commits
+// Enhanced endpoints with rate limiting
 app.get('/api/commits', async (req, res) => {
     try {
         const commits = await readJsonFile(COMMITS_FILE);
@@ -166,21 +290,31 @@ app.get('/api/commits', async (req, res) => {
             )
             : enrichedCommits;
 
+        logger.log(LOG_LEVELS.INFO, 'Commits retrieved successfully', {
+            total: filtered.length,
+            searchTerm: search || 'none'
+        });
+
         res.json(filtered);
     } catch (error) {
-        console.error('Error getting commits:', error);
+        logger.log(LOG_LEVELS.ERROR, 'Failed to retrieve commits', { error: error.message });
         res.status(500).json({ error: 'Server error' });
     }
 });
 
-// Handle votes
-app.post('/api/votes', async (req, res) => {
+app.post('/api/votes', rateLimiters.votes, async (req, res) => {
     const { commitId, userId } = req.body;
+
+    if (!commitId || !userId) {
+        logger.log(LOG_LEVELS.WARN, 'Invalid vote request', { commitId, userId });
+        return res.status(400).json({ error: 'Missing required fields' });
+    }
 
     try {
         const votes = await readJsonFile(VOTES_FILE);
 
         if (votes.some(vote => vote.commitId === commitId && vote.userId === userId)) {
+            logger.log(LOG_LEVELS.WARN, 'Duplicate vote attempt', { commitId, userId });
             return res.status(400).json({ error: 'Already voted' });
         }
 
@@ -188,60 +322,45 @@ app.post('/api/votes', async (req, res) => {
             commitId,
             userId,
             timestamp: new Date().toISOString(),
+            ip: req.ip // Store IP for abuse detection
         });
 
         await writeJsonFile(VOTES_FILE, votes);
+        logger.log(LOG_LEVELS.INFO, 'Vote recorded successfully', { commitId, userId });
         res.json({ success: true });
     } catch (error) {
-        console.error('Error handling vote:', error);
+        logger.log(LOG_LEVELS.ERROR, 'Failed to record vote', { error: error.message });
         res.status(500).json({ error: 'Server error' });
     }
 });
 
-// Sync commits from GitHub
-app.post('/api/sync', async (req, res) => {
+app.post('/api/sync', rateLimiters.sync, async (req, res) => {
     const { token } = req.body;
-    if (!token) return res.status(401).json({ error: 'No token provided' });
+    if (!token) {
+        logger.log(LOG_LEVELS.WARN, 'Sync attempted without token');
+        return res.status(401).json({ error: 'No token provided' });
+    }
 
     try {
+        logger.log(LOG_LEVELS.INFO, 'Starting GitHub sync');
         const commits = await fetchAllCommits(token);
         await writeJsonFile(COMMITS_FILE, commits);
+        logger.log(LOG_LEVELS.INFO, 'GitHub sync completed', { commitsCount: commits.length });
         res.json({ success: true, count: commits.length });
     } catch (error) {
-        console.error('Error syncing commits:', error);
+        logger.log(LOG_LEVELS.ERROR, 'GitHub sync failed', { error: error.message });
         res.status(500).json({ error: 'Sync failed' });
     }
 });
 
 
-// Simple endpoint
-// Serve static files from the "public" directory
-app.use(express.static(path.join(__dirname, 'public')));
 
-// Serve the leaderboard.html file on the "/leaderboard" route
-app.get('/leaderboard', (req, res) => {
-    res.sendFile(path.join(__dirname, 'public', 'leaderboard.html'));
-});
-
-// A simple root route
-app.get('/', (req, res) => {
-    res.send(`
-        <h1>uwu hewwo fwom the sewvew mistew ~!!</h1>
-        <img src="https://i1.sndcdn.com/artworks-3Fn0oBkY1yGb9wvN-Jr0xwA-t500x500.jpg">
-    `);
-});
-
-app.get('/oauth/callback', (req, res) => {
-    const { code } = req.query; // Retrieve the authorization code
-    if (!code) {
-        return res.status(400).send('Missing authorization code');
-    }
-    // Process the code (e.g., exchange it for an access token)
-    res.send('Authentication successful!');
-});
-
-
+// Start server
 const PORT = process.env.PORT || 3000;
 app.listen(PORT, () => {
-    console.log(`Server running on port ${PORT}`);
+    logger.log(LOG_LEVELS.INFO, `Server started`, {
+        port: PORT,
+        environment: process.env.NODE_ENV || 'development',
+        time: new Date().toISOString()
+    });
 });
