@@ -19,7 +19,7 @@ if (!GITHUB_CLIENT_ID || !GITHUB_CLIENT_SECRET) {
 }
 
 // File paths
-const PULLS_FILE = path.resolve('pull_requests.json');
+const COMMITS_FILE = path.resolve('commits.json');
 const VOTES_FILE = path.resolve('votes.json');
 const LOGS_DIR = path.resolve('logs');
 
@@ -65,47 +65,52 @@ async function writeJsonFile(filename, data) {
     await fs.writeFile(filename, JSON.stringify(data, null, 2));
 }
 
-// Helper function to fetch all pull requests from GitHub
-async function fetchAllPullRequests(token) {
-    const pullRequests = [];
+
+//helper function to fetch all commits from GitHub
+async function fetchAllCommits(token) {
+    const commits = [];
     let page = 1;
     let hasNextPage = true;
 
     while (hasNextPage) {
-        const response = await fetch(
-            `https://api.github.com/repos/DishpitDev/Slopify/pulls?state=all&per_page=100&page=${page}`, {
-                headers: {
-                    Authorization: `token ${token}`,
-                    Accept: 'application/vnd.github.v3+json',
-                },
-            });
+        const response = await fetch(`https://api.github.com/repos/DishpitDev/Slopify/commits?per_page=100&page=${page}`, {
+            headers: {
+                Authorization: `token ${token}`,
+                Accept: 'application/vnd.github.v3+json',
+            },
+        });
 
         if (!response.ok) {
             throw new Error(`GitHub API error: ${response.statusText}`);
         }
 
-        const pagePRs = await response.json();
-        pullRequests.push(...pagePRs);
+        const pageCommits = await response.json();
+        commits.push(...pageCommits);
 
-        // Check if there's another page
+        // Check if there's another page (via the 'Link' header)
         const linkHeader = response.headers.get('Link');
         hasNextPage = linkHeader && linkHeader.includes('rel="next"');
         page++;
     }
 
-    // Map the pull requests to the desired format
-    return pullRequests.map(pr => ({
-        id: pr.number.toString(),
-        message: pr.title,
-        description: pr.body || '',
-        author: pr.user.login,
-        date: pr.created_at,
-        link: pr.html_url,
-        state: pr.state,
-        merged: pr.merged_at !== null,
-        mergedAt: pr.merged_at
+    // Filter out commits authored by "Dishpit" or with messages starting with "Merge"
+    const filteredCommits = commits.filter(c =>
+        c.commit.author.name !== 'Dishpit' &&
+        !c.commit.message.startsWith('Merge')
+    );
+
+    // Map and return the filtered commits with links
+    return filteredCommits.map(c => ({
+        id: c.sha,
+        message: c.commit.message,
+        author: c.commit.author.name,
+        date: c.commit.author.date,
+        link: c.html_url, // Include the link to the commit
     }));
 }
+
+
+
 
 // GitHub OAuth endpoint
 app.get('/auth/github', async (req, res) => {
@@ -118,7 +123,7 @@ app.get('/auth/github', async (req, res) => {
         const tokenResponse = await fetch('https://github.com/login/oauth/access_token', {
             method: 'POST',
             headers: {
-                Accept: 'application/json',
+                Accept: 'application/json',  // We're expecting a JSON response
             },
             body: new URLSearchParams({
                 client_id: GITHUB_CLIENT_ID,
@@ -126,6 +131,7 @@ app.get('/auth/github', async (req, res) => {
                 code,
             }),
         });
+
 
         const tokenData = await tokenResponse.json();
         if (!tokenResponse.ok) {
@@ -139,48 +145,47 @@ app.get('/auth/github', async (req, res) => {
     }
 });
 
-// Get pull requests
-app.get('/api/pulls', async (req, res) => {
+// Get commits
+app.get('/api/commits', async (req, res) => {
     try {
-        const pulls = await readJsonFile(PULLS_FILE);
+        const commits = await readJsonFile(COMMITS_FILE);
         const votes = await readJsonFile(VOTES_FILE);
 
-        const enrichedPulls = pulls.map(pull => ({
-            ...pull,
-            upvotes: votes.filter(vote => vote.pullId === pull.id).length,
+        const enrichedCommits = commits.map(commit => ({
+            ...commit,
+            upvotes: votes.filter(vote => vote.commitId === commit.id).length,
         }));
 
-        enrichedPulls.sort((a, b) => b.upvotes - a.upvotes);
+        enrichedCommits.sort((a, b) => b.upvotes - a.upvotes);
 
         const search = req.query.search?.toLowerCase();
         const filtered = search
-            ? enrichedPulls.filter(p =>
-                p.message.toLowerCase().includes(search) ||
-                p.author.toLowerCase().includes(search) ||
-                (p.description && p.description.toLowerCase().includes(search))
+            ? enrichedCommits.filter(c =>
+                c.message.toLowerCase().includes(search) ||
+                c.author.toLowerCase().includes(search)
             )
-            : enrichedPulls;
+            : enrichedCommits;
 
         res.json(filtered);
     } catch (error) {
-        console.error('Error getting pull requests:', error);
+        console.error('Error getting commits:', error);
         res.status(500).json({ error: 'Server error' });
     }
 });
 
 // Handle votes
 app.post('/api/votes', async (req, res) => {
-    const { pullId, userId } = req.body;
+    const { commitId, userId } = req.body;
 
     try {
         const votes = await readJsonFile(VOTES_FILE);
 
-        if (votes.some(vote => vote.pullId === pullId && vote.userId === userId)) {
+        if (votes.some(vote => vote.commitId === commitId && vote.userId === userId)) {
             return res.status(400).json({ error: 'Already voted' });
         }
 
         votes.push({
-            pullId,
+            commitId,
             userId,
             timestamp: new Date().toISOString(),
         });
@@ -193,21 +198,23 @@ app.post('/api/votes', async (req, res) => {
     }
 });
 
-// Sync pull requests from GitHub
+// Sync commits from GitHub
 app.post('/api/sync', async (req, res) => {
     const { token } = req.body;
     if (!token) return res.status(401).json({ error: 'No token provided' });
 
     try {
-        const pulls = await fetchAllPullRequests(token);
-        await writeJsonFile(PULLS_FILE, pulls);
-        res.json({ success: true, count: pulls.length });
+        const commits = await fetchAllCommits(token);
+        await writeJsonFile(COMMITS_FILE, commits);
+        res.json({ success: true, count: commits.length });
     } catch (error) {
-        console.error('Error syncing pull requests:', error);
+        console.error('Error syncing commits:', error);
         res.status(500).json({ error: 'Sync failed' });
     }
 });
 
+
+// Simple endpoint
 // Serve static files from the "public" directory
 app.use(express.static(path.join(__dirname, 'public')));
 
@@ -216,22 +223,23 @@ app.get('/leaderboard', (req, res) => {
     res.sendFile(path.join(__dirname, 'public', 'leaderboard.html'));
 });
 
-// Root route
+// A simple root route
 app.get('/', (req, res) => {
     res.send(`
-        <h1>Pull Request Voting Server</h1>
-        <p>Server is running successfully!</p>
+        <h1>uwu hewwo fwom the sewvew mistew ~!!</h1>
+        <img src="https://i1.sndcdn.com/artworks-3Fn0oBkY1yGb9wvN-Jr0xwA-t500x500.jpg">
     `);
 });
 
-// OAuth callback route
 app.get('/oauth/callback', (req, res) => {
-    const { code } = req.query;
+    const { code } = req.query; // Retrieve the authorization code
     if (!code) {
         return res.status(400).send('Missing authorization code');
     }
+    // Process the code (e.g., exchange it for an access token)
     res.send('Authentication successful!');
 });
+
 
 const PORT = process.env.PORT || 3000;
 app.listen(PORT, () => {
