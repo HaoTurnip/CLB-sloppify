@@ -206,19 +206,28 @@
     </style>
 </head>
 <body>
-<div class="container">
-    <div class="header">
-        <h1>Commit Leaderboard</h1>
-        <div id="auth-section">
-            <button id="login-button" class="auth-button">Login with GitHub</button>
-            <span id="user-info" class="user-info" style="display: none"></span>
+    <div class="container">
+        <!-- This is the header div -->
+        <div class="header" style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 30px; border-bottom: 2px solid #00ffff; padding-bottom: 20px;">
+            <h1 style="font-size: 24px; color: #00ffff; text-transform: uppercase; margin: 0;">Commit Leaderboard</h1>
+            <div id="auth-section">
+                <button id="login-button" style="background: #000000; color: #00ffff; border: 2px solid #00ffff; padding: 10px 20px; cursor: pointer; font-family: 'Press Start 2P', cursive; font-size: 12px; box-shadow: 3px 3px 0 #ff00ff; transition: all 0.2s;">Login with GitHub</button>
+                <span id="user-info" style="color: #ff00ff; font-size: 12px; display: none;"></span>
+            </div>
         </div>
+    
+        <!-- Add the style switcher buttons here, right after the header -->
+        <div style="margin-bottom: 20px; text-align: center; padding: 10px; border: 2px solid #00ffff; background: #220033;">
+            <p style="color: #00ffff; margin-bottom: 10px; font-size: 12px;">SELECT YOUR STYLE</p>
+            <button onclick="setStyle('synthwave')" style="margin: 0 10px; background: #000000; color: #00ffff; border: 2px solid #00ffff; padding: 8px 16px; cursor: pointer; font-family: 'Press Start 2P', cursive; font-size: 10px;">SYNTHWAVE</button>
+            <button onclick="setStyle('retroblog')" style="margin: 0 10px; background: #000000; color: #00ffff; border: 2px solid #00ffff; padding: 8px 16px; cursor: pointer; font-family: 'Press Start 2P', cursive; font-size: 10px;">RETRO BLOG</button>
+            <button onclick="setStyle('cyberpunk')" style="margin: 0 10px; background: #000000; color: #00ffff; border: 2px solid #00ffff; padding: 8px 16px; cursor: pointer; font-family: 'Press Start 2P', cursive; font-size: 10px;">CYBERPUNK</button>
+        </div>
+    
+        <div id="error-message" style="background: #ff0000; color: white; padding: 10px; margin-bottom: 20px; display: none; border: 2px solid white; text-align: center; font-size: 12px;"></div>
+        <input type="text" id="search-input" style="width: 100%; padding: 12px; margin-bottom: 20px; background: #220033; border: 2px solid #00ffff; color: #00ff00; font-family: 'Press Start 2P', cursive; font-size: 12px; box-sizing: border-box;" placeholder="Search commits...">
+        <div id="leaderboard"></div>
     </div>
-
-    <div id="error-message"></div>
-    <input type="text" id="search-input" class="search-box" placeholder="Search commits...">
-    <div id="leaderboard"></div>
-</div>
 
 <script src="leader_board_tunnel.js"></script>
 <script>
@@ -359,6 +368,170 @@
         updateAuthUI();
         loadCommits();
 </script>
+<script>
+    const styles = {
+        synthwave: {
+            body: {
+                background: '#000000',
+                color: '#00ff00',
+                backgroundImage: `linear-gradient(0deg, transparent 24%, 
+                    rgba(32, 255, 255, .05) 25%, 
+                    rgba(32, 255, 255, .05) 26%, transparent 27%, transparent 74%, 
+                    rgba(32, 255, 255, .05) 75%, 
+                    rgba(32, 255, 255, .05) 76%, transparent 77%, transparent),
+                    linear-gradient(90deg, transparent 24%, 
+                    rgba(32, 255, 255, .05) 25%, 
+                    rgba(32, 255, 255, .05) 26%, transparent 27%, transparent 74%, 
+                    rgba(32, 255, 255, .05) 75%, 
+                    rgba(32, 255, 255, .05) 76%, transparent 77%, transparent)`,
+                backgroundSize: '50px 50px',
+                textShadow: '2px 2px #ff00ff'
+            },
+            container: {
+                border: '2px solid #00ffff',
+                boxShadow: '0 0 20px #00ffff'
+            },
+            card: {
+                background: '#220033',
+                border: '2px solid #00ffff',
+                boxShadow: '4px 4px 0 #ff00ff'
+            },
+            button: {
+                background: '#000000',
+                color: '#00ffff',
+                border: '2px solid #00ffff',
+                boxShadow: '3px 3px 0 #ff00ff'
+            },
+            heading: {
+                color: '#00ffff'
+            },
+            searchBox: {
+                background: '#220033',
+                border: '2px solid #00ffff',
+                color: '#00ff00'
+            },
+            styleSwitch: {
+                background: '#220033',
+                border: '2px solid #00ffff'
+            }
+        },
+        retroblog: {
+            body: {
+                background: '#ffffe0',
+                color: '#000000',
+                backgroundImage: 'none',
+                textShadow: 'none'
+            },
+            container: {
+                border: '2px solid #8b4513',
+                boxShadow: '5px 5px 0 #d2691e'
+            },
+            card: {
+                background: '#ffffff',
+                border: '1px solid #8b4513',
+                boxShadow: '3px 3px 0 #d2691e'
+            },
+            button: {
+                background: '#f4a460',
+                color: '#000000',
+                border: '2px solid #8b4513',
+                boxShadow: '2px 2px 0 #8b4513'
+            },
+            heading: {
+                color: '#8b4513'
+            },
+            searchBox: {
+                background: '#ffffff',
+                border: '2px solid #8b4513',
+                color: '#000000'
+            },
+            styleSwitch: {
+                background: '#f4a460',
+                border: '2px solid #8b4513'
+            }
+        },
+        cyberpunk: {
+            body: {
+                background: '#0a0a2a',
+                color: '#00ff00',
+                backgroundImage: `repeating-linear-gradient(
+                    90deg,
+                    rgba(255,0,0,0.1) 0px,
+                    rgba(255,0,0,0.1) 1px,
+                    transparent 1px,
+                    transparent 20px
+                )`,
+                backgroundSize: '100% 100%',
+                textShadow: '0 0 5px #00ff00'
+            },
+            container: {
+                border: '2px solid #ff0000',
+                boxShadow: '0 0 20px rgba(255,0,0,0.5), inset 0 0 20px rgba(255,0,0,0.5)'
+            },
+            card: {
+                background: 'rgba(0,0,0,0.8)',
+                border: '1px solid #ff0000',
+                boxShadow: '0 0 10px rgba(255,0,0,0.5)'
+            },
+            button: {
+                background: '#000000',
+                color: '#ff0000',
+                border: '1px solid #ff0000',
+                boxShadow: '0 0 10px rgba(255,0,0,0.5)'
+            },
+            heading: {
+                color: '#ff0000'
+            },
+            searchBox: {
+                background: 'rgba(0,0,0,0.8)',
+                border: '1px solid #ff0000',
+                color: '#ff0000',
+                boxShadow: '0 0 10px rgba(255,0,0,0.5)'
+            },
+            styleSwitch: {
+                background: 'rgba(0,0,0,0.8)',
+                border: '1px solid #ff0000',
+                boxShadow: '0 0 10px rgba(255,0,0,0.5)'
+            }
+        }
+    };
 
+    function setStyle(theme) {
+        const style = styles[theme];
+        
+        // Apply body styles
+        Object.assign(document.body.style, style.body);
+        
+        // Apply container styles
+        const container = document.querySelector('.container');
+        Object.assign(container.style, style.container);
+        
+        // Apply styles to all cards
+        document.querySelectorAll('.commit-card').forEach(card => {
+            Object.assign(card.style, style.card);
+        });
+        
+        // Apply styles to all buttons
+        document.querySelectorAll('button').forEach(button => {
+            Object.assign(button.style, style.button);
+        });
+        
+        // Apply styles to headings
+        document.querySelectorAll('h1, h3').forEach(heading => {
+            Object.assign(heading.style, style.heading);
+        });
+
+        // Apply styles to search box
+        const searchBox = document.querySelector('#search-input');
+        Object.assign(searchBox.style, style.searchBox);
+
+        // Apply styles to style switcher container
+        const styleSwitch = document.querySelector('[style*="text-align: center"]');
+        Object.assign(styleSwitch.style, style.styleSwitch);
+        
+        // Update createCommitCard function to use current theme
+        window.currentTheme = theme;
+    }
+    </script>
 </body>
 </html>
