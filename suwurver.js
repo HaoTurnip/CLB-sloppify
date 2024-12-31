@@ -65,6 +65,53 @@ async function writeJsonFile(filename, data) {
     await fs.writeFile(filename, JSON.stringify(data, null, 2));
 }
 
+
+//helper function to fetch all commits from GitHub
+async function fetchAllCommits(token) {
+    const commits = [];
+    let page = 1;
+    let hasNextPage = true;
+
+    while (hasNextPage) {
+        const response = await fetch(`https://api.github.com/repos/DishpitDev/Slopify/commits?per_page=100&page=${page}`, {
+            headers: {
+                Authorization: `token ${token}`,
+                Accept: 'application/vnd.github.v3+json',
+            },
+        });
+
+        if (!response.ok) {
+            throw new Error(`GitHub API error: ${response.statusText}`);
+        }
+
+        const pageCommits = await response.json();
+        commits.push(...pageCommits);
+
+        // Check if there's another page (via the 'Link' header)
+        const linkHeader = response.headers.get('Link');
+        hasNextPage = linkHeader && linkHeader.includes('rel="next"');
+        page++;
+    }
+
+    // Filter out commits authored by "Dishpit" or with messages starting with "Merge"
+    const filteredCommits = commits.filter(c =>
+        c.commit.author.name !== 'Dishpit' &&
+        !c.commit.message.startsWith('Merge')
+    );
+
+    // Map and return the filtered commits with links
+    return filteredCommits.map(c => ({
+        id: c.sha,
+        message: c.commit.message,
+        author: c.commit.author.name,
+        date: c.commit.author.date,
+        link: c.html_url, // Include the link to the commit
+    }));
+}
+
+
+
+
 // GitHub OAuth endpoint
 app.get('/auth/github', async (req, res) => {
     const code = req.query.code;
@@ -157,25 +204,7 @@ app.post('/api/sync', async (req, res) => {
     if (!token) return res.status(401).json({ error: 'No token provided' });
 
     try {
-        const response = await fetch('https://api.github.com/repos/DishpitDev/Slopify/commits', {
-            headers: {
-                Authorization: `token ${token}`,
-                Accept: 'application/vnd.github.v3+json',
-            },
-        });
-
-        if (!response.ok) {
-            throw new Error(`GitHub API error: ${response.statusText}`);
-        }
-
-        const githubCommits = await response.json();
-        const commits = githubCommits.map(c => ({
-            id: c.sha,
-            message: c.commit.message,
-            author: c.commit.author.name,
-            date: c.commit.author.date,
-        }));
-
+        const commits = await fetchAllCommits(token);
         await writeJsonFile(COMMITS_FILE, commits);
         res.json({ success: true, count: commits.length });
     } catch (error) {
@@ -183,6 +212,7 @@ app.post('/api/sync', async (req, res) => {
         res.status(500).json({ error: 'Sync failed' });
     }
 });
+
 
 // Simple endpoint
 // Serve static files from the "public" directory

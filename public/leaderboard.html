@@ -119,6 +119,13 @@
             margin-bottom: 20px;
             display: none;
         }
+
+        .commit-card .commit-link {
+            text-decoration: none;
+            color: inherit;
+            display: block; /* Makes the entire content area clickable */
+        }
+
     </style>
 </head>
 <body>
@@ -199,25 +206,24 @@
         setTimeout(() => {
         errorDiv.style.display = 'none';
     }, 5000);
-    }
-
         function createCommitCard(commit) {
-        const card = document.createElement('div');
-        card.className = 'commit-card';
-        card.innerHTML = `
-                <div class="commit-info">
-                    <h3>${commit.message}</h3>
-                    <p>by ${commit.author} • ${new Date(commit.date).toLocaleDateString()}</p>
-                </div>
+            const card = document.createElement('div');
+            card.className = 'commit-card';
+            card.innerHTML = `
+                <a href="${commit.link}" target="_blank" class="commit-link">
+                    <div class="commit-info">
+                        <h3>${commit.message}</h3>
+                        <p>by ${commit.author} • ${new Date(commit.date).toLocaleDateString()}</p>
+                    </div>
+                </a>
                 <button class="upvote-btn ${votedCommits.has(commit.id) ? 'voted' : ''}"
                         data-commit-id="${commit.id}">
                     ▲ ${commit.upvotes || 0}
-                </button>
-            `;
-        return card;
-    }
+                </button>`;
+            return card;
+            }
 
-        async function loadCommits(searchTerm = '') {
+            async function loadCommits(searchTerm = '') {
         try {
         const commits = await tunnel.get('/api/commits', { search: searchTerm });
         const leaderboard = document.getElementById('leaderboard');
@@ -267,7 +273,7 @@
 
         // Initial load
         updateAuthUI();
-        loadCommits();
+        loadCommits();}
 </script>
 
 </body>
